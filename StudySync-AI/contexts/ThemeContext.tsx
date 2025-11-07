@@ -1,64 +1,29 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import { useTheme } from '@/contexts/ThemeContext'
+import { Sun, Moon } from 'lucide-react'
 
-type Theme = 'light' | 'dark' | 'system'
-type ThemeContextType = {
-  theme: Theme
-  setTheme: (theme: Theme) => void
-  resolvedTheme: 'light' | 'dark'
-}
+export function ThemeToggle() {
+  const { theme, setTheme, resolvedTheme } = useTheme()
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const storedTheme = localStorage.getItem('theme') as Theme | null
-    if (storedTheme) {
-      setThemeState(storedTheme)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-
-    let currentTheme: 'light' | 'dark'
-    
-    if (theme === 'system') {
-      currentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    } else {
-      currentTheme = theme
-    }
-
-    setResolvedTheme(currentTheme)
-    document.documentElement.classList.toggle('dark', currentTheme === 'dark')
-    localStorage.setItem('theme', theme)
-  }, [theme, mounted])
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme)
-  }
-
-  if (!mounted) {
-    return null
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <button
+      onClick={toggleTheme}
+      className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+      aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+    >
+      <span className="sr-only">Toggle theme</span>
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+          resolvedTheme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+      <Sun className="absolute left-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
+      <Moon className="absolute right-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
+    </button>
   )
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  return context
 }
